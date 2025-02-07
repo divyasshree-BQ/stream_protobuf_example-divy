@@ -1,0 +1,15 @@
+kafka:
+  bootstrap.servers: "rpk0.bitquery.io:9093,rpk1.bitquery.io:9093,rpk2.bitquery.io:9093"
+  security.protocol: "SASL_SSL"
+  sasl.mechanism: "SCRAM-SHA-512"
+  sasl.username: <YOUR USERNAME>
+  sasl.password: <YOUR PASSWORD>
+  group.id: <YOUR USERNAME>_group
+  ssl.key.location: "ssl/client.key.pem"
+  ssl.certificate.location: "ssl/client.cer.pem"
+  ssl.ca.location: "ssl/server.cer.pem"
+  ssl.endpoint.identification.algorithm: "none"
+  enable.auto.commit: false
+consumer:
+  topic: solana.dextrades.proto
+  partitioned: true
