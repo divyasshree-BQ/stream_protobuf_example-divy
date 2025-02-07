@@ -3,19 +3,27 @@ Example of project reading protobuf stream from kafka
 
 ## Run project
 
+checkout:
+
+```
+git clone https://github.com/bitquery/stream_protobuf_example.git
+```
+
 compile:
 
 ```
 go build
 ```
 
-Copy config:
+copy config:
 
 ```
 cp config_example.yml config.yml
 ```
 
-then fill in variables ```<YOUR USERNAME>``` and ```<YOUR PASSWORD>``` in config.yml file and run it:
+then fill in variables ```<YOUR USERNAME>``` and ```<YOUR PASSWORD>``` in config.yml file
+
+run it:
 
 ```
 ./stream_protobuf_example 
