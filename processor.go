@@ -91,6 +91,8 @@ func (processor *Processor) close() {
 
 func (processor *Processor) unknownMessageHandler(ctx context.Context, message *kafka.Message, worker int) error {
 	processingTime := time.Now()
+	processor.stat.record(message.Timestamp, processingTime)
+
 	fmt.Printf("Received message with key %s with lag %d msec from partition %d[%s] in worker %d\n",
 		message.Key, processingTime.Sub(message.Timestamp).Milliseconds(),
 		message.TopicPartition.Partition, message.TopicPartition.Offset, worker)
@@ -99,6 +101,8 @@ func (processor *Processor) unknownMessageHandler(ctx context.Context, message *
 
 func (processor *Processor) dexTradesMessageHandler(ctx context.Context, message *kafka.Message, worker int) error {
 	processingTime := time.Now()
+	processor.stat.record(message.Timestamp, processingTime)
+
 	var batch solana_messages.DexParsedBlockMessage
 	err := proto.Unmarshal(message.Value, &batch)
 	if err != nil {
@@ -120,6 +124,8 @@ func (processor *Processor) dexTradesMessageHandler(ctx context.Context, message
 
 func (processor *Processor) transactionsMessageHandler(ctx context.Context, message *kafka.Message, worker int) error {
 	processingTime := time.Now()
+	processor.stat.record(message.Timestamp, processingTime)
+
 	var batch solana_messages.ParsedIdlBlockMessage
 	err := proto.Unmarshal(message.Value, &batch)
 	if err != nil {
@@ -136,6 +142,8 @@ func (processor *Processor) transactionsMessageHandler(ctx context.Context, mess
 
 func (processor *Processor) tokensMessageHandler(ctx context.Context, message *kafka.Message, worker int) error {
 	processingTime := time.Now()
+	processor.stat.record(message.Timestamp, processingTime)
+
 	var batch solana_messages.TokenBlockMessage
 	err := proto.Unmarshal(message.Value, &batch)
 	if err != nil {

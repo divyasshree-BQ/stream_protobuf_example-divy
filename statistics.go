@@ -12,7 +12,12 @@ type Statistics struct {
 	duplicates      map[string]int
 	blockTimestamps map[uint64]int64
 	txTimestamps    map[uint64][]int64
-	mu              sync.Mutex
+
+	processorLagSum   int64
+	processorLagMax   int64
+	processorLagCount int64
+
+	mu sync.Mutex
 }
 
 func newStatistics() *Statistics {
@@ -73,6 +78,25 @@ func (s *Statistics) report() {
 
 	if count > 0 {
 		fmt.Printf("Average lag to block time %d msec, max lag %d msec\n", sumLag/count, maxLag)
+	}
+
+	if s.processorLagCount > 0 {
+		fmt.Printf("Average lag to message time %d msec, max lag %d msec\n", s.processorLagSum/s.processorLagCount, s.processorLagMax)
+	}
+
+}
+
+func (s *Statistics) record(timestamp time.Time, processingTime time.Time) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	lag := processingTime.Sub(timestamp).Milliseconds()
+
+	s.processorLagCount++
+	s.processorLagSum += lag
+
+	if lag > s.processorLagMax {
+		s.processorLagMax = lag
 	}
 
 }

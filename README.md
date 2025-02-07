@@ -34,6 +34,27 @@ cp config_example.yml config.yml
 
 then fill in variables ```<YOUR USERNAME>``` and ```<YOUR PASSWORD>``` in config.yml file
 
+
+You also can change the desired topic name:
+
+Protobuf format, no block aggregation
+```
+solana.dextrades.proto
+solana.tokens.proto
+solana.transactions.proto
+```
+
+and json format, aggregated by block
+```
+solana.balance_updates
+solana.dexorders
+solana.dexpools
+solana.dextrades
+solana.instruction_balance_updates
+solana.instructions
+solana.transfers
+```
+
 run it:
 
 ```
