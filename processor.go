@@ -26,12 +26,14 @@ type Processor struct {
 	wg        errgroup.Group
 	config    ProcessorConfig
 	processFn processFn
+	stat      *Statistics
 }
 
 func newProcessor(config *Config) (*Processor, error) {
 	processor := &Processor{
 		queue:  make(chan *kafka.Message, config.Processor.Buffer),
 		config: config.Processor,
+		stat:   newStatistics(),
 	}
 
 	var processFn processFn
@@ -80,6 +82,7 @@ func (processor *Processor) close() {
 	fmt.Println("Shutting down processor...")
 	processor.wg.Wait()
 	fmt.Println("Processor stopped")
+	processor.stat.report()
 }
 
 func (processor *Processor) unknownMessageHandler(ctx context.Context, message *kafka.Message, worker int) error {
@@ -98,6 +101,7 @@ func (processor *Processor) dexTradesMessageHandler(ctx context.Context, message
 	count := 0
 	for _, t := range batch.Transactions {
 		count += len(t.Trades)
+		processor.stat.add(batch.Header.Slot, t.Index)
 	}
 
 	fmt.Printf("slot %d processed %d txs (%d trades) from partition %d[%s] in worker %d\n",
