@@ -13,3 +13,6 @@ kafka:
 consumer:
   topic: solana.dextrades.proto
   partitioned: true
+processor:
+  buffer_size: 100
+  worker_count: 8

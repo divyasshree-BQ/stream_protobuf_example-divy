@@ -14,8 +14,9 @@ import (
 )
 
 type Config struct {
-	Kafka    kafka.ConfigMap
-	Consumer ConsumerConfig
+	Kafka     kafka.ConfigMap
+	Consumer  ConsumerConfig
+	Processor ProcessorConfig
 }
 
 func main() {
@@ -41,13 +42,13 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	defer consumer.close()
 
 	processor, err := newProcessor(&config)
 	if err != nil {
 		panic(err)
 	}
-
-	defer consumer.close()
+	defer processor.close()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	fmt.Println("press Ctrl-C to exit")
@@ -62,5 +63,6 @@ func main() {
 		}
 	}()
 
+	processor.start(ctx)
 	consumer.waitMessages(ctx, processor)
 }

@@ -67,7 +67,7 @@ func consumerWaitMessages(ctx context.Context, consumer *kafka.Consumer, listene
 	for {
 		select {
 		case <-ctx.Done():
-			fmt.Println("Done, exiting message loop")
+			fmt.Println("Done, exiting consumer loop")
 			return nil
 		default:
 		}
@@ -77,7 +77,7 @@ func consumerWaitMessages(ctx context.Context, consumer *kafka.Consumer, listene
 			return err
 		}
 
-		listener.process(message)
+		listener.enqueue(message)
 
 	}
 }

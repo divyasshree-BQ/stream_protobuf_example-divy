@@ -9,11 +9,22 @@ checkout:
 git clone https://github.com/bitquery/stream_protobuf_example.git
 ```
 
-compile:
+install golang (https://go.dev/doc/install) and compile:
+
+you may need to install C++
 
 ```
+apt-get install g++
+```
+
+and then 
+
+```
+cd stream_protobuf_example/
 go build
 ```
+
+
 
 copy config:
 
