@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"sync"
 	"time"
-
-	"github.com/bitquery/streaming_protobuf/v2/solana/messages"
 )
 
 type Statistics struct {
@@ -28,18 +26,18 @@ func newStatistics() *Statistics {
 	}
 }
 
-func (s *Statistics) add(header *solana_messages.BlockHeader, txIndex uint32, timestamp time.Time, processingTime time.Time) {
+func (s *Statistics) add(blockTs int64, slot uint64, txIndex uint32, timestamp time.Time, processingTime time.Time) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	key := fmt.Sprintf("%d-%d", header.Slot, txIndex)
+	key := fmt.Sprintf("%d-%d", slot, txIndex)
 	s.duplicates[key] += 1
 
-	if header.Timestamp > 0 {
-		s.blockTimestamps[header.Slot] = header.Timestamp * 1000
+	if blockTs > 0 {
+		s.blockTimestamps[slot] = blockTs * 1000
 	}
 
-	s.txTimestamps[header.Slot] = append(s.txTimestamps[header.Slot], timestamp.UnixMilli())
+	s.txTimestamps[slot] = append(s.txTimestamps[slot], timestamp.UnixMilli())
 
 }
 
