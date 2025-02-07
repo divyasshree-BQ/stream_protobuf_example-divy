@@ -15,7 +15,7 @@ Copy config:
 cp config_example.yml config.yml
 ```
 
-then fill in variables <YOUR USERNAME> and <YOUR PASSWORD> in config.yml file and run it:
+then fill in variables ```<YOUR USERNAME>``` and ```<YOUR PASSWORD>``` in config.yml file and run it:
 
 ```
 ./stream_protobuf_example 
