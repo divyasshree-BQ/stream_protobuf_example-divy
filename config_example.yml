@@ -14,5 +14,5 @@ consumer:
   topic: solana.dextrades.proto
   partitioned: true
 processor:
-  buffer_size: 100
-  worker_count: 8
+  buffer: 100
+  workers: 8
