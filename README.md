@@ -76,3 +76,14 @@ slot 319062398 processed 5 txs (8 trades) from partition 3[894335] in worker 5
 ```
 
 after pressing Ctrl-C it will show basic statistical report
+
+## Checking speed of message reading
+
+To test how fast your server reads messages, try the following experiment:
+
+1. Set ```enable.auto.commit: false``` in config.yml and set ```group.id: <YOUR USERNAME>_<SOME RANDOM NUMBER>```
+2. Run consumer for some time, stop it. Wait a minute and start again
+
+What you expect to see is the reducing lag in messages, from approx 60,000 msec to close to 0.
+
+It must catch up in less than 10 seconds. If it does not catch up fast, test server connection speed and ping to brokers.
