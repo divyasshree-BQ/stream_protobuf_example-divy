@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/bitquery/streaming_protobuf/v2/solana/messages"
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
@@ -71,6 +72,9 @@ func (processor *Processor) start(ctx context.Context) {
 					if err != nil {
 						fmt.Println("Error processing message", err)
 					}
+					if time.Now().Unix()%10 == 0 {
+						processor.stat.report()
+					}
 				}
 			}
 			return nil
@@ -86,12 +90,15 @@ func (processor *Processor) close() {
 }
 
 func (processor *Processor) unknownMessageHandler(ctx context.Context, message *kafka.Message, worker int) error {
-	fmt.Printf("Received message with key %s from partition %d[%s] in worker %d\n",
-		message.Key, message.TopicPartition.Partition, message.TopicPartition.Offset, worker)
+	processingTime := time.Now()
+	fmt.Printf("Received message with key %s with lag %d msec from partition %d[%s] in worker %d\n",
+		message.Key, processingTime.Sub(message.Timestamp).Milliseconds(),
+		message.TopicPartition.Partition, message.TopicPartition.Offset, worker)
 	return nil
 }
 
 func (processor *Processor) dexTradesMessageHandler(ctx context.Context, message *kafka.Message, worker int) error {
+	processingTime := time.Now()
 	var batch solana_messages.DexParsedBlockMessage
 	err := proto.Unmarshal(message.Value, &batch)
 	if err != nil {
@@ -101,27 +108,34 @@ func (processor *Processor) dexTradesMessageHandler(ctx context.Context, message
 	count := 0
 	for _, t := range batch.Transactions {
 		count += len(t.Trades)
-		processor.stat.add(batch.Header.Slot, t.Index)
+		processor.stat.add(batch.Header, t.Index, message.Timestamp, processingTime)
 	}
 
-	fmt.Printf("slot %d processed %d txs (%d trades) from partition %d[%s] in worker %d\n",
-		batch.Header.Slot, len(batch.Transactions), count, message.TopicPartition.Partition, message.TopicPartition.Offset, worker)
+	fmt.Printf("slot %d processed with lag %d msec %d txs (%d trades) from partition %d[%s] in worker %d\n",
+		batch.Header.Slot, processingTime.Sub(message.Timestamp).Milliseconds(),
+		len(batch.Transactions), count, message.TopicPartition.Partition, message.TopicPartition.Offset, worker)
 
 	return nil
 }
 
 func (processor *Processor) transactionsMessageHandler(ctx context.Context, message *kafka.Message, worker int) error {
+	processingTime := time.Now()
 	var batch solana_messages.ParsedIdlBlockMessage
 	err := proto.Unmarshal(message.Value, &batch)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("slot %d processed %d txs from partition %d[%s] in worker %d\n",
-		batch.Header.Slot, len(batch.Transactions), message.TopicPartition.Partition, message.TopicPartition.Offset, worker)
+	for _, t := range batch.Transactions {
+		processor.stat.add(batch.Header, t.Index, message.Timestamp, processingTime)
+	}
+	fmt.Printf("slot %d processed with lag %d msec %d txs from partition %d[%s] in worker %d\n",
+		batch.Header.Slot, processingTime.Sub(message.Timestamp).Milliseconds(),
+		len(batch.Transactions), message.TopicPartition.Partition, message.TopicPartition.Offset, worker)
 	return nil
 }
 
 func (processor *Processor) tokensMessageHandler(ctx context.Context, message *kafka.Message, worker int) error {
+	processingTime := time.Now()
 	var batch solana_messages.TokenBlockMessage
 	err := proto.Unmarshal(message.Value, &batch)
 	if err != nil {
@@ -134,6 +148,7 @@ func (processor *Processor) tokensMessageHandler(ctx context.Context, message *k
 	instructionTokenSupplyUpdates := 0
 
 	for _, t := range batch.Transactions {
+		processor.stat.add(batch.Header, t.Index, message.Timestamp, processingTime)
 		transfers += len(t.Transfers)
 		balanceUpdates += len(t.BalanceUpdates)
 		for _, instr := range t.InstructionBalanceUpdates {
@@ -142,8 +157,9 @@ func (processor *Processor) tokensMessageHandler(ctx context.Context, message *k
 		}
 	}
 
-	fmt.Printf("slot %d processed %d txs (%d transfers %d balanceUpdates %d instructionBalanceUpdates %d instructionTokenSupplyUpdates) from partition %d[%s] in worker %d\n",
-		batch.Header.Slot, len(batch.Transactions),
+	fmt.Printf("slot %d processed with lag %d msec %d txs (%d transfers %d balanceUpdates %d instructionBalanceUpdates %d instructionTokenSupplyUpdates) from partition %d[%s] in worker %d\n",
+		batch.Header.Slot, processingTime.Sub(message.Timestamp).Milliseconds(),
+		len(batch.Transactions),
 		transfers, balanceUpdates, instructionBalanceUpdates, instructionTokenSupplyUpdates,
 		message.TopicPartition.Partition, message.TopicPartition.Offset, worker)
 

@@ -47,8 +47,11 @@ Running consumer rdkafka#consumer-2
 Running consumer rdkafka#consumer-5
 Running consumer rdkafka#consumer-3
 Running consumer rdkafka#consumer-4
-Received message with key 319040909 from partition 1[825631]
-Received message with key 319040910 from partition 0[827071]
-Received message with key 319040911 from partition 2[825942]
-
+slot 319062398 processed 2 txs (2 trades) from partition 3[894333] in worker 3
+slot 319062398 processed 1 txs (1 trades) from partition 3[894336] in worker 7
+slot 319062398 processed 4 txs (6 trades) from partition 3[894332] in worker 4
+slot 319062398 processed 5 txs (8 trades) from partition 3[894335] in worker 5
+...
 ```
+
+after pressing Ctrl-C it will show basic statistical report
