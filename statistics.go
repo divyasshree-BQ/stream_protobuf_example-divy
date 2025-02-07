@@ -56,6 +56,7 @@ func (s *Statistics) report() {
 
 	percent := float64(duplicatedTxs) * 100 / float64(totalTxs)
 
+	fmt.Printf("-----------------------------------------------------------\n")
 	fmt.Printf("total txs processed: %d duplicate transactions: %d (%.1f %%) \n", totalTxs, duplicatedTxs, percent)
 
 	count := int64(0)
@@ -83,7 +84,7 @@ func (s *Statistics) report() {
 	if s.processorLagCount > 0 {
 		fmt.Printf("Average lag to message time %d msec, max lag %d msec\n", s.processorLagSum/s.processorLagCount, s.processorLagMax)
 	}
-
+	fmt.Printf("-----------------------------------------------------------\n")
 }
 
 func (s *Statistics) record(timestamp time.Time, processingTime time.Time) {

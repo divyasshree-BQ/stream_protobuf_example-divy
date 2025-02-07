@@ -58,6 +58,7 @@ func (processor *Processor) enqueue(message *kafka.Message) {
 }
 
 func (processor *Processor) start(ctx context.Context) {
+	counter := 0
 	for i := 0; i < processor.config.Workers; i++ {
 		processor.wg.Go(func() error {
 			i := i
@@ -72,7 +73,8 @@ func (processor *Processor) start(ctx context.Context) {
 					if err != nil {
 						fmt.Println("Error processing message", err)
 					}
-					if time.Now().Unix()%10 == 0 {
+					counter++
+					if counter%100 == 0 {
 						processor.stat.report()
 					}
 				}
