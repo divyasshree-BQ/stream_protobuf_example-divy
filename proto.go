@@ -44,7 +44,10 @@ func (processor *Processor) transactionsMessageHandler(ctx context.Context, mess
 	}
 	for _, t := range batch.Transactions {
 		processor.stat.add(batch.Header.Timestamp, batch.Header.Slot, t.Index, message.Timestamp, processingTime)
+		// Print the parsed data for debugging
+
 	}
+
 	fmt.Printf("slot %d processed with lag %d msec %d txs from partition %d[%s] in worker %d\n",
 		batch.Header.Slot, processingTime.Sub(message.Timestamp).Milliseconds(),
 		len(batch.Transactions), message.TopicPartition.Partition, message.TopicPartition.Offset, worker)
