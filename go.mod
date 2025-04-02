@@ -14,5 +14,6 @@ require (
 
 require (
 	github.com/akamensky/base58 v0.0.0-20210829145138-ce8bf8802e8f // indirect
+	github.com/mr-tron/base58 v1.2.0 // indirect
 	google.golang.org/protobuf v1.35.2 // indirect
 )

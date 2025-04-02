@@ -5,82 +5,91 @@ import (
 	"fmt"
 	"time"
 
-	solana_messages "github.com/bitquery/streaming_protobuf/v2/solana/messages"
+	evm_messages "github.com/bitquery/streaming_protobuf/v2/evm/messages"
+
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/golang/protobuf/proto"
 )
 
-func (processor *Processor) dexTradesMessageHandler(ctx context.Context, message *kafka.Message, worker int) error {
+func (processor *Processor) tokensMessageHandlerBSC(ctx context.Context, message *kafka.Message, worker int) error {
 	processingTime := time.Now()
 	processor.stat.record(message.Timestamp, processingTime)
 
-	var batch solana_messages.DexParsedBlockMessage
+	var batch evm_messages.TokenBlockMessage
 	err := proto.Unmarshal(message.Value, &batch)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to unmarshal TokenBlockMessage: %w", err)
 	}
 
-	count := 0
-	for _, t := range batch.Transactions {
-		count += len(t.Trades)
-		processor.stat.add(batch.Header.Timestamp, batch.Header.Slot, t.Index, message.Timestamp, processingTime)
-	}
+	transfers := len(batch.Transfers)
 
-	fmt.Printf("slot %d processed with lag %d msec %d txs (%d trades) from partition %d[%s] in worker %d\n",
-		batch.Header.Slot, processingTime.Sub(message.Timestamp).Milliseconds(),
-		len(batch.Transactions), count, message.TopicPartition.Partition, message.TopicPartition.Offset, worker)
+	fmt.Printf("block %d processed with lag %d ms (%d token transfers) from partition %d[%s] in worker %d\n",
+		batch.Header.Number,
+		processingTime.Sub(message.Timestamp).Milliseconds(),
+		transfers,
+		message.TopicPartition.Partition,
+		message.TopicPartition.Offset,
+		worker,
+	)
 
-	return nil
-}
-
-func (processor *Processor) transactionsMessageHandler(ctx context.Context, message *kafka.Message, worker int) error {
-	processingTime := time.Now()
-	processor.stat.record(message.Timestamp, processingTime)
-
-	var batch solana_messages.ParsedIdlBlockMessage
-	err := proto.Unmarshal(message.Value, &batch)
-	if err != nil {
-		return err
-	}
-	for _, t := range batch.Transactions {
-		processor.stat.add(batch.Header.Timestamp, batch.Header.Slot, t.Index, message.Timestamp, processingTime)
-	}
-	fmt.Printf("slot %d processed with lag %d msec %d txs from partition %d[%s] in worker %d\n",
-		batch.Header.Slot, processingTime.Sub(message.Timestamp).Milliseconds(),
-		len(batch.Transactions), message.TopicPartition.Partition, message.TopicPartition.Offset, worker)
-	return nil
-}
-
-func (processor *Processor) tokensMessageHandler(ctx context.Context, message *kafka.Message, worker int) error {
-	processingTime := time.Now()
-	processor.stat.record(message.Timestamp, processingTime)
-
-	var batch solana_messages.TokenBlockMessage
-	err := proto.Unmarshal(message.Value, &batch)
-	if err != nil {
-		return err
-	}
-
-	transfers := 0
-	balanceUpdates := 0
-	instructionBalanceUpdates := 0
-	instructionTokenSupplyUpdates := 0
-
-	for _, t := range batch.Transactions {
-		processor.stat.add(batch.Header.Timestamp, batch.Header.Slot, t.Index, message.Timestamp, processingTime)
-		transfers += len(t.Transfers)
-		balanceUpdates += len(t.BalanceUpdates)
-		for _, instr := range t.InstructionBalanceUpdates {
-			instructionBalanceUpdates += len(instr.OwnCurrencyBalanceUpdates)
-			instructionTokenSupplyUpdates += len(instr.TokenSupplyUpdates)
+	//Set it to false if you don't want to print the transfers
+	verbose := true
+	if verbose {
+		for i, transfer := range batch.Transfers {
+			fmt.Printf("  [%d] %s -> %s | amount: %x | token: %s (%s)\n",
+				i,
+				fmt.Sprintf("%x", transfer.Sender),
+				fmt.Sprintf("%x", transfer.Receiver),
+				transfer.Amount,
+				transfer.Currency.Name,
+				transfer.Currency.Symbol,
+			)
 		}
 	}
 
-	fmt.Printf("slot %d processed with lag %d msec %d txs (%d transfers %d balanceUpdates %d instructionBalanceUpdates %d instructionTokenSupplyUpdates) from partition %d[%s] in worker %d\n",
-		batch.Header.Slot, processingTime.Sub(message.Timestamp).Milliseconds(),
-		len(batch.Transactions),
-		transfers, balanceUpdates, instructionBalanceUpdates, instructionTokenSupplyUpdates,
-		message.TopicPartition.Partition, message.TopicPartition.Offset, worker)
+	return nil
+}
+
+func (processor *Processor) transactionsMessageHandlerBSC(ctx context.Context, message *kafka.Message, worker int) error {
+	processingTime := time.Now()
+	processor.stat.record(message.Timestamp, processingTime)
+
+	var batch evm_messages.ParsedAbiBlockMessage
+	err := proto.Unmarshal(message.Value, &batch)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal ParsedAbiBlockMessage: %w", err)
+	}
+
+	txCount := len(batch.Transactions)
+
+	for _, tx := range batch.Transactions {
+		// TransactionHeader.Index gives per-block order
+		index := tx.TransactionHeader.Index
+
+		// Optional debug print: signature, success/failure
+		// This will only print the first call in the call list (if any)
+		if len(tx.Calls) > 0 {
+			call := tx.Calls[0]
+			Method := call.Header.Signature.Name
+			success := tx.TransactionStatus.Success
+			fmt.Printf("  tx[%d] %x -> %x | sig: %s | success: %t\n",
+				index,
+				tx.TransactionHeader.From,
+				tx.TransactionHeader.To,
+				Method,
+				success,
+			)
+		}
+	}
+
+	fmt.Printf("block %d processed with lag %d ms (%d transactions) from partition %d[%s] in worker %d\n",
+		batch.Header.Number,
+		processingTime.Sub(message.Timestamp).Milliseconds(),
+		txCount,
+		message.TopicPartition.Partition,
+		message.TopicPartition.Offset,
+		worker,
+	)
 
 	return nil
 }

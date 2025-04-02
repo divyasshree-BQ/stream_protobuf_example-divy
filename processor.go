@@ -36,12 +36,13 @@ func newProcessor(config *Config) (*Processor, error) {
 
 	var processFn processFn
 	switch config.Consumer.Topic {
-	case "solana.dextrades.proto":
-		processFn = processor.dexTradesMessageHandler
-	case "solana.transactions.proto":
-		processFn = processor.transactionsMessageHandler
-	case "solana.tokens.proto":
-		processFn = processor.tokensMessageHandler
+	// BSC
+	// case "bsc.dextrades.proto", "bsc.broadcasted.dextrades.proto":
+	// 	processFn = processor.dexTradesMessageHandlerBSC
+	case "bsc.transactions.proto", "bsc.broadcasted.transactions.proto":
+		processFn = processor.transactionsMessageHandlerBSC
+	case "bsc.tokens.proto", "bsc.broadcasted.tokens.proto":
+		processFn = processor.tokensMessageHandlerBSC
 	default:
 		processFn = processor.jsonMessageHandler
 	}
