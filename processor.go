@@ -39,8 +39,8 @@ func newProcessor(config *Config) (*Processor, error) {
 	// BSC
 	// case "bsc.dextrades.proto", "bsc.broadcasted.dextrades.proto":
 	// 	processFn = processor.dexTradesMessageHandlerBSC
-	// case "bsc.transactions.proto", "bsc.broadcasted.transactions.proto":
-	// 	processFn = processor.transactionsMessageHandlerBSC
+	case "bsc.transactions.proto", "bsc.broadcasted.transactions.proto":
+		processFn = processor.transactionsMessageHandlerBSC
 	case "bsc.tokens.proto", "bsc.broadcasted.tokens.proto":
 		processFn = processor.tokensMessageHandlerBSC
 	default:
