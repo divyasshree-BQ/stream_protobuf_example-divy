@@ -31,9 +31,10 @@ func (processor *Processor) tokensMessageHandlerBSC(ctx context.Context, message
 		message.TopicPartition.Offset,
 		worker,
 	)
+	fmt.Printf("Chain ID: %x\n", batch.Chain.ChainId)
 
 	//Set it to false if you don't want to print the transfers
-	verbose := true
+	verbose := false
 	if verbose {
 		for i, transfer := range batch.Transfers {
 			fmt.Printf("  [%d] %s -> %s | amount: %x | token: %s (%s)\n",
