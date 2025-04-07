@@ -50,6 +50,35 @@ func (processor *Processor) tokensMessageHandlerBSC(ctx context.Context, message
 
 	return nil
 }
+func printArgumentValue(val *evm_messages.ArgumentValue, indent string) {
+
+	switch v := val.Value.(type) {
+	// case *evm_messages.ArgumentValue_string:
+	// 	fmt.Printf("%s\"%s\"\n", indent, v.String)
+	case *evm_messages.ArgumentValue_Bytes:
+		fmt.Printf("%s%x\n", indent, v.Bytes)
+	case *evm_messages.ArgumentValue_UInt:
+		fmt.Printf("%s%d (uint)\n", indent, v.UInt)
+	case *evm_messages.ArgumentValue_Int:
+		fmt.Printf("%s%d (int)\n", indent, v.Int)
+	case *evm_messages.ArgumentValue_Bool:
+		fmt.Printf("%s%t\n", indent, v.Bool)
+	case *evm_messages.ArgumentValue_Array:
+		fmt.Printf("%sArray:\n", indent)
+		for i, elem := range v.Array.Elements {
+			fmt.Printf("%s  [%d]: ", indent, i)
+			printArgumentValue(elem, indent+"    ")
+		}
+	case *evm_messages.ArgumentValue_Tuple:
+		fmt.Printf("%sTuple (%s):\n", indent, v.Tuple.Name)
+		for i, elem := range v.Tuple.Elements {
+			fmt.Printf("%s  [%d]: ", indent, i)
+			printArgumentValue(elem, indent+"    ")
+		}
+	default:
+		fmt.Printf("%s<unknown or unset>\n", indent)
+	}
+}
 
 func (processor *Processor) transactionsMessageHandlerBSC(ctx context.Context, message *kafka.Message, worker int) error {
 	processingTime := time.Now()
@@ -64,22 +93,31 @@ func (processor *Processor) transactionsMessageHandlerBSC(ctx context.Context, m
 	txCount := len(batch.Transactions)
 
 	for _, tx := range batch.Transactions {
-		// TransactionHeader.Index gives per-block order
 		index := tx.TransactionHeader.Index
 
-		// Optional debug print: signature, success/failure
-		// This will only print the first call in the call list (if any)
-		if len(tx.Calls) > 0 {
-			call := tx.Calls[0]
-			Method := call.Header.Signature.Name
-			success := tx.TransactionStatus.Success
-			fmt.Printf("  tx[%d] %x -> %x | sig: %s | success: %t\n",
+		for callIdx, call := range tx.Calls {
+			method := call.Header.Signature.Name
+			success := call.Header.Success
+
+			fmt.Printf("  tx[%d] call[%d]: %x -> %x | sig: %s | success: %t\n",
 				index,
-				tx.TransactionHeader.From,
-				tx.TransactionHeader.To,
-				Method,
+				callIdx,
+				call.Header.From,
+				call.Header.To,
+				method,
 				success,
 			)
+
+			// Print all arguments
+			for _, arg := range call.Arguments {
+				// check for nil before getting the actual value
+				if arg == nil || arg.Value == nil {
+					fmt.Printf("    Arg: <nil or unset>\n")
+					continue
+				}
+				fmt.Printf("    Arg: name=%s, value=", arg.Name)
+				printArgumentValue(arg.Value, "    ")
+			}
 		}
 	}
 
