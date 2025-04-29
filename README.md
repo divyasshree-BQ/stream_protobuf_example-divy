@@ -1,4 +1,4 @@
-# stream_protobuf_example
+# Go Example: Bitquery Kafka Streams
 Example of project reading protobuf stream from kafka
 
 ## Run project
@@ -6,7 +6,7 @@ Example of project reading protobuf stream from kafka
 checkout:
 
 ```
-git clone divyasshree-BQ/stream_protobuf_example-divy.git
+git clone https://github.com/divyasshree-BQ/stream_protobuf_example-divy.git
 ```
 
 install golang (https://go.dev/doc/install) and compile:
