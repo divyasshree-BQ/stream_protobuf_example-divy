@@ -19,11 +19,24 @@ func (processor *Processor) dexTradesMessageHandler(ctx context.Context, message
 	if err != nil {
 		return err
 	}
+	// Call the bridging logic to get PRICE
+	bridgeTradePrices(&batch)
 
 	count := 0
 	for _, t := range batch.Transactions {
 		count += len(t.Trades)
 		processor.stat.add(batch.Header.Timestamp, batch.Header.Slot, t.Index, message.Timestamp, processingTime)
+		// for _, t := range batch.Transactions {
+		// 	count += len(t.Trades)
+		// 	processor.stat.add(batch.Header.Timestamp, batch.Header.Slot, t.Index, message.Timestamp, processingTime)
+
+		// 	fmt.Printf("  Transaction Index: %d, Signature: %x, Trades: %d\n", t.Index, t.Signature, len(t.Trades))
+		// 	for _, trade := range t.Trades {
+		// 		fmt.Printf("    Trade - Protocol: %s, Market: %x\n", trade.Dex.ProtocolName, trade.Market.MarketAddress)
+		// 		fmt.Printf("      Buy Amount: %d, Sell Amount: %d\n", trade.Buy.Amount, trade.Sell.Amount)
+		// 	}
+		// }  //uncomment this block to print detailed transaction info
+
 	}
 
 	fmt.Printf("slot %d processed with lag %d msec %d txs (%d trades) from partition %d[%s] in worker %d\n",
