@@ -1,15 +1,16 @@
 package main
 
 import (
-	"encoding/hex"
 	"fmt"
 	"sync"
 
 	solana_messages "github.com/bitquery/streaming_protobuf/v2/solana/messages"
+	"github.com/mr-tron/base58"
 )
 
 var (
-	wsolMintAddress         = "So11111111111111111111111111111111111111112" // base58
+	wsolMintAddress         = "So11111111111111111111111111111111111111112"
+	usdcMintAddress         = "Es9vMFrzaCERGF3yp3r7dcDRcfzVfQdW2M3s9yHgjQcV"
 	lastWSOLPrice   float64 = 1.0
 	priceLock       sync.RWMutex
 )
@@ -18,7 +19,7 @@ func bytesToBase58(b []byte) string {
 	if b == nil {
 		return ""
 	}
-	return hex.EncodeToString(b)
+	return base58.Encode(b)
 }
 
 func bridgeTradePrices(block *solana_messages.DexParsedBlockMessage) {
@@ -42,14 +43,16 @@ func bridgeTradePrices(block *solana_messages.DexParsedBlockMessage) {
 
 			signature := bytesToBase58(tx.Signature)
 
-			if baseMint == wsolMintAddress {
-				price := baseAmount / quoteAmount
-				setWSOLPrice(price)
-				fmt.Printf("Updated WSOL price: %.8f from trade %s\n", price, signature)
-			} else if quoteMint == wsolMintAddress {
+			if baseMint == wsolMintAddress && quoteMint == usdcMintAddress {
 				price := quoteAmount / baseAmount
 				setWSOLPrice(price)
-				fmt.Printf("Updated WSOL price: %.8f from trade %s\n", price, signature)
+				fmt.Printf("Updated WSOL price from WSOL/USDC: %.8f (trade %s)\n", price, signature)
+
+			} else if quoteMint == wsolMintAddress && baseMint == usdcMintAddress {
+				price := baseAmount / quoteAmount
+				setWSOLPrice(price)
+				fmt.Printf("Updated WSOL price from USDC/WSOL: %.8f (trade %s)\n", price, signature)
+
 			} else {
 				priceLock.RLock()
 				wsolPrice := lastWSOLPrice
@@ -58,6 +61,7 @@ func bridgeTradePrices(block *solana_messages.DexParsedBlockMessage) {
 				estimated := (quoteAmount / baseAmount) * wsolPrice
 				fmt.Printf("Estimated token price from trade %s: %.8f (in WSOL)\n", signature, estimated)
 			}
+
 		}
 	}
 }
