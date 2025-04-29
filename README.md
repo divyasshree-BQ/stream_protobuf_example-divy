@@ -6,7 +6,7 @@ Example of project reading protobuf stream from kafka
 checkout:
 
 ```
-git clone https://github.com/bitquery/stream_protobuf_example.git
+git clone divyasshree-BQ/stream_protobuf_example-divy.git
 ```
 
 install golang (https://go.dev/doc/install) and compile:
