@@ -8,8 +8,15 @@ import (
 	solana_messages "github.com/bitquery/streaming_protobuf/v2/solana/messages"
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/golang/protobuf/proto"
+	"github.com/mr-tron/base58"
 )
 
+func convertToBase58(b []byte) string {
+	if b == nil {
+		return ""
+	}
+	return base58.Encode(b)
+}
 func (processor *Processor) dexTradesMessageHandler(ctx context.Context, message *kafka.Message, worker int) error {
 	processingTime := time.Now()
 	processor.stat.record(message.Timestamp, processingTime)
@@ -29,9 +36,9 @@ func (processor *Processor) dexTradesMessageHandler(ctx context.Context, message
 			count += len(t.Trades)
 			processor.stat.add(batch.Header.Timestamp, batch.Header.Slot, t.Index, message.Timestamp, processingTime)
 
-			fmt.Printf("  Transaction Index: %d, Signature: %x, Trades: %d\n", t.Index, t.Signature, len(t.Trades))
+			fmt.Printf("  Transaction Index: %d, Signature: %s, Trades: %d\n", t.Index, convertToBase58(t.Signature), len(t.Trades))
 			for _, trade := range t.Trades {
-				fmt.Printf("    Trade - Protocol: %s, Market: %x\n", trade.Dex.ProtocolName, trade.Market.MarketAddress)
+				fmt.Printf("    Trade - Protocol: %s, Market: %s\n", trade.Dex.ProtocolName, convertToBase58(trade.Market.MarketAddress))
 				fmt.Printf("      Buy Amount: %d, Sell Amount: %d\n", trade.Buy.Amount, trade.Sell.Amount)
 			}
 		} //uncomment this block to print detailed transaction info
