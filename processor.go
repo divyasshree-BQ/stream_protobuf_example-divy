@@ -43,7 +43,7 @@ func newProcessor(config *Config) (*Processor, error) {
 	case "solana.tokens.proto":
 		processFn = processor.tokensMessageHandler
 	default:
-		processFn = processor.jsonMessageHandler
+		processFn = processor.transactionsMessageHandler
 	}
 
 	processor.processFn = processFn
