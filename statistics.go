@@ -47,15 +47,19 @@ func (s *Statistics) report() {
 
 	duplicatedTxs := 0
 	totalTxs := 0
+
 	for _, v := range s.duplicates {
-		totalTxs += 1
-		duplicatedTxs += v - 1
+		totalTxs += v          // count all appearances of this tx
+		duplicatedTxs += v - 1 // subtract 1 to get only the duplicates
 	}
 
-	percent := float64(duplicatedTxs) * 100 / float64(totalTxs)
+	percent := 0.0
+	if totalTxs > 0 {
+		percent = float64(duplicatedTxs) * 100 / float64(totalTxs)
+	}
 
 	fmt.Printf("-----------------------------------------------------------\n")
-	fmt.Printf("total txs processed: %d duplicate transactions: %d (%.1f %%) \n", totalTxs, duplicatedTxs, percent)
+	fmt.Printf("total txs processed: %d duplicate transactions: %d (%.1f%%)\n", totalTxs, duplicatedTxs, percent)
 
 	count := int64(0)
 	sumLag := int64(0)
