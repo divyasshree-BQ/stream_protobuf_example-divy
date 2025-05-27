@@ -26,3 +26,5 @@ go.work.sum
 /config.yml
 /eu-g.pem
 /notes.md
+processed_slots.csv
+check_window.py
