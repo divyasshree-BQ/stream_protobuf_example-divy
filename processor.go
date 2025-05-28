@@ -116,7 +116,7 @@ func (p *Processor) writeCSVOnExit(filePath string) {
 	for slot, ts := range p.firstSeen {
 		writer.Write([]string{
 			strconv.FormatUint(slot, 10),
-			ts.UTC().Format(time.RFC3339Nano),
+			ts.Format(time.RFC3339Nano),
 		})
 	}
 	fmt.Printf("Wrote %d unique blocks to %s\n", len(p.firstSeen), filePath)

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"time"
 
 	solana_messages "github.com/bitquery/streaming_protobuf/v2/solana/messages"
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
@@ -13,7 +14,7 @@ func (p *Processor) dexTradesMessageHandler(ctx context.Context, message *kafka.
 	if err := proto.Unmarshal(message.Value, &batch); err != nil {
 		return err
 	}
-	p.recordFirstSeen(batch.Header.Slot, message.Timestamp)
+	p.recordFirstSeen(batch.Header.Slot, time.Now().UTC())
 	return nil
 }
 
@@ -22,7 +23,7 @@ func (p *Processor) transactionsMessageHandler(ctx context.Context, message *kaf
 	if err := proto.Unmarshal(message.Value, &batch); err != nil {
 		return err
 	}
-	p.recordFirstSeen(batch.Header.Slot, message.Timestamp)
+	p.recordFirstSeen(batch.Header.Slot, time.Now().UTC())
 	return nil
 }
 
@@ -31,6 +32,6 @@ func (p *Processor) tokensMessageHandler(ctx context.Context, message *kafka.Mes
 	if err := proto.Unmarshal(message.Value, &batch); err != nil {
 		return err
 	}
-	p.recordFirstSeen(batch.Header.Slot, message.Timestamp)
+	p.recordFirstSeen(batch.Header.Slot, time.Now().UTC())
 	return nil
 }
