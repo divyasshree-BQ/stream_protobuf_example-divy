@@ -28,3 +28,5 @@ go.work.sum
 /notes.md
 processed_slots.csv
 check_window.py
+block_stats.csv
+stream_protobuf_example

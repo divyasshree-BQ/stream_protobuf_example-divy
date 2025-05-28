@@ -65,4 +65,7 @@ func main() {
 
 	processor.start(ctx)
 	consumer.waitMessages(ctx, processor)
+
+	// Write CSV after message loop exits
+	processor.writeCSVOnExit("block_stats.csv")
 }
