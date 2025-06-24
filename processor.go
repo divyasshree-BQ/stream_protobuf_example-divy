@@ -43,6 +43,9 @@ func newProcessor(config *Config) (*Processor, error) {
 		processFn = processor.transactionsMessageHandlerBSC
 	case "bsc.tokens.proto", "bsc.broadcasted.tokens.proto":
 		processFn = processor.tokensMessageHandlerBSC
+	case "bsc.dextrades.proto":
+		processFn = processor.dextradeMessageHandlerBSC
+
 	default:
 		processFn = processor.jsonMessageHandler
 	}

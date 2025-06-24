@@ -7,9 +7,26 @@ import (
 
 	evm_messages "github.com/bitquery/streaming_protobuf/v2/evm/messages"
 
+	"math/big"
+
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/golang/protobuf/proto"
 )
+
+func decodeAmount(amountBytes []byte) *big.Int {
+	return new(big.Int).SetBytes(amountBytes)
+}
+
+func printTradeAsset(asset *evm_messages.TradeAsset) {
+	amount := decodeAmount(asset.Amount)
+	fmt.Printf("    Currency: %s (%s) | Amount: %s | Id: %x | URI: %s\n",
+		asset.Currency.Name,
+		asset.Currency.Symbol,
+		amount.String(),
+		asset.Id,
+		asset.URI,
+	)
+}
 
 func (processor *Processor) tokensMessageHandlerBSC(ctx context.Context, message *kafka.Message, worker int) error {
 	processingTime := time.Now()
@@ -129,6 +146,68 @@ func (processor *Processor) transactionsMessageHandlerBSC(ctx context.Context, m
 		message.TopicPartition.Offset,
 		worker,
 	)
+
+	return nil
+}
+
+func (processor *Processor) dextradeMessageHandlerBSC(ctx context.Context, message *kafka.Message, worker int) error {
+	processingTime := time.Now()
+	processor.stat.record(message.Timestamp, processingTime)
+
+	var batch evm_messages.DexBlockMessage
+	err := proto.Unmarshal(message.Value, &batch)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal DexBlockMessage: %w", err)
+	}
+
+	// tradeCount := len(batch.Trades)
+
+	for i, trade := range batch.Trades {
+		fmt.Printf("Trade[%d]:\n", i)
+		fmt.Printf("  Dex: %s (%s) Version: %s\n",
+			trade.Dex.ProtocolName,
+			trade.Dex.ProtocolFamily,
+			trade.Dex.ProtocolVersion,
+		)
+
+		// Print Buyer side assets
+		fmt.Printf("  Buy Side:\n")
+		for _, asset := range trade.Buy.Assets {
+			printTradeAsset(asset)
+		}
+
+		// Print Seller side assets
+		fmt.Printf("  Sell Side:\n")
+		for _, asset := range trade.Sell.Assets {
+			printTradeAsset(asset)
+		}
+
+		// Print Fees
+		if len(trade.Fees) > 0 {
+			fmt.Printf("  Fees:\n")
+			for _, fee := range trade.Fees {
+				amount := decodeAmount(fee.Amount)
+				fmt.Printf("    Currency: %s (%s) | Amount: %s | Payer: %x | Recipient: %x\n",
+					fee.Currency.Name,
+					fee.Currency.Symbol,
+					amount.String(),
+					fee.Payer,
+					fee.Recipient,
+				)
+			}
+		}
+
+		fmt.Printf("  Success: %t | Sender: %x\n", trade.Success, trade.Sender)
+	}
+
+	// fmt.Printf("block %d processed with lag %d ms (%d dex trades) from partition %d[%s] in worker %d\n",
+	// 	batch.Header.Number,
+	// 	processingTime.Sub(message.Timestamp).Milliseconds(),
+	// 	tradeCount,
+	// 	message.TopicPartition.Partition,
+	// 	message.TopicPartition.Offset,
+	// 	worker,
+	// )
 
 	return nil
 }
