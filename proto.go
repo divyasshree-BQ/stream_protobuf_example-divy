@@ -187,7 +187,7 @@ func (processor *Processor) dextradeMessageHandlerBSC(ctx context.Context, messa
 			fmt.Printf("  Fees:\n")
 			for _, fee := range trade.Fees {
 				amount := decodeAmount(fee.Amount)
-				fmt.Printf("    Currency: %s (%s) | Amount: %s | Payer: %x | Recipient: %x\n",
+				fmt.Printf("    Currency: %s (%s) | Amount: %s | Payer: 0x%x | Recipient: 0x%x\n",
 					fee.Currency.Name,
 					fee.Currency.Symbol,
 					amount.String(),
@@ -197,17 +197,20 @@ func (processor *Processor) dextradeMessageHandlerBSC(ctx context.Context, messa
 			}
 		}
 
-		fmt.Printf("  Success: %t | Sender: %x\n", trade.Success, trade.Sender)
+		fmt.Printf("  Success: %t | Sender: 0x%x\n", trade.Success, trade.Sender)
 	}
-
-	// fmt.Printf("block %d processed with lag %d ms (%d dex trades) from partition %d[%s] in worker %d\n",
-	// 	batch.Header.Number,
-	// 	processingTime.Sub(message.Timestamp).Milliseconds(),
-	// 	tradeCount,
-	// 	message.TopicPartition.Partition,
-	// 	message.TopicPartition.Offset,
-	// 	worker,
-	// )
 
 	return nil
 }
+
+// fmt.Printf("block %d processed with lag %d ms (%d dex trades) from partition %d[%s] in worker %d\n",
+// 	batch.Header.Number,
+// 	processingTime.Sub(message.Timestamp).Milliseconds(),
+// 	tradeCount,
+// 	message.TopicPartition.Partition,
+// 	message.TopicPartition.Offset,
+// 	worker,
+// )
+
+// 	return nil
+// }
